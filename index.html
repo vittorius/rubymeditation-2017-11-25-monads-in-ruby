@@ -24,8 +24,41 @@
 	<body>
 		<div class="reveal">
 			<div class="slides">
-				<section>Slide 1</section>
-				<section>Slide 2</section>
+				<section>
+					<h1>Monads in Ruby</h1>
+					<!-- TODO: make my name font smaller -->
+					<h6>By Victor Zagorodny</h6>
+					<!-- TODO: add font awesome and icons -->
+					<!-- TODO: make links smaller and group near the bottom of the slide -->
+					<!-- TODO: make visible not full links by just IDs (e.g. "vittoriuz") -->
+					<a href="mailto:post.vittorius@gmail.com">Email: post.vittorius@gmail.com</a><br>
+					<a href="https://twitter.com/vittoriuz">Twitter: https://twitter.com/vittoriuz</a><br>
+					<a href="https://github.com/vittorius">Github: https://github.com/vittorius</a><br>
+					<aside class="notes">
+						Представить себя и тему
+					</aside>
+				</section>
+				<section>
+					<img src="img/01_year_2013_still_explaining_monads.png" alt="Still explaining monads">
+					<!-- TODO: add footnote with credits to mraleph -->
+					<aside class="notes">
+						Интерес к функциональному программированию, равно как и спрос на знания в этой области, ощутимо вырос за последние несколько лет. Одни концепции, такие как иммутабельность данных и чистые функции используются относительно массово, другие же остаются загадочными и кажутся малоприменимыми за рамками чисто функциональных языков и среды гиков, а их практическая применимость ставится под сомнение. Сегодня попробуем развеять немного мифов относительно монад.
+					</aside>
+				</section>
+				<section>
+					<h3>Anyway, what is a monad?</h3>
+					<aside class="notes">
+						1. Задать вопрос, какая часть из аудитории хорошо понимает, что такое монада?<br>
+						2. Если бОльшая, предложить пропустить слайды, где мы объясняем что такое монада, и сразу перейти к примерам в Ruby (нажми Esc чтобы показать все слайды)<br>
+						3. Если 50/50 и меньше, продолжить<br>
+					</aside>
+				</section>
+				<section>
+					<!-- TODO: can be a fragment of "Anyway, what is a monad?" slide -->
+					<aside class="notes">
+						Даже, если вы знаете, что такое монада, вот пара версий из интернетов.
+					</aside>
+				</section>
 			</div>
 		</div>
 
@@ -42,7 +75,8 @@
 					{ src: 'plugin/markdown/markdown.js' },
 					{ src: 'plugin/notes/notes.js', async: true },
 					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
-				]
+				],
+				history: true
 			});
 		</script>
 	</body>
