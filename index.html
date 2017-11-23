@@ -89,29 +89,24 @@
           <h3>Monads: <span style="color: #f31e5e">why?</span></h3>
         </section>
         <section>
-            <h3>Lazy Evaluation</h3>
-            <h5 class="fragment">Example #1 (pseudocode):</h5>
-              <pre class="fragment">
-                  
-                <code data-trim class="fsharp">
-                  let numbers = [1, ...]
-                  fun is_prime x all (map (y -> x mod y <> 0) [2..x-1])
-                  let primes = filter is_prime numbers
-                  let tenth_prime = first (take primes 10)
-                  print tenth_prime
-                </code>
-              </pre></span>
-          </p>
-          
+          <h3>Lazy Evaluation</h3>
+          <h5 class="fragment">Example #1 (pseudocode):</h5>
+          <pre class="fragment">
+            <code data-trim class="fsharp">
+              let numbers = [1, ...]
+              fun is_prime x all (map (y -> x mod y <> 0) [2..x-1])
+              let primes = filter is_prime numbers
+              let tenth_prime = first (take primes 10)
+              print tenth_prime
+            </code>
+          </pre>
           <h5 class="fragment">Example #2:</h5>
-              <pre class="fragment">
-                  
-                <code data-trim class="ruby">
-                  if user.signed_in? && user.current_order&.pending?
-                  # ...
-                </code>
-              </pre>
-          
+          <pre class="fragment">
+            <code data-trim class="ruby">
+              if user.signed_in? && user.current_order&.pending?
+              # ...
+            </code>
+          </pre>
           <aside class="notes">
             В ленивой модели вычислений вычисления выражений не производятся пока их результат не требуется для выражения более высокого уровня либо реализации side effect - например, печать в консоль. Порядок редукции выражений неизвестен при их определении. Каждое выражение представляет собой так называемый thunk - выражение, которое не вычислено на данный момент, но может быть вычислено по запросу.
             Рассказать про примеры кода.
@@ -130,7 +125,7 @@
 
               f.value # blocks until complete
 
-              f.add_listener do
+              f.on_complete do
               # ... called upon completion ...
               end
             </code>
@@ -144,12 +139,11 @@
           <!-- TODO: here and below, use PrismJS, it highlights Ruby classes usage -->
           <h3>An ugly example</h3>
           <pre>
-            <code data-trim class="ruby" data-noescape>
-              <br>
+            <!-- TODO: add spacing using class -->
+            <code data-trim class="ruby" style="line-height: 3rem">
               users = UsersService.all
               archived_users = ArchivedUsersService.for_last_month
               (users + archived_users).select(&:active).size
-              <br>
             </code>
           </pre>
           <aside class="notes">
@@ -171,7 +165,85 @@
             </code>
           </pre>
           <aside class="notes">
-            А вот в этом фрагменте кода уже все намного более красиво: чистые функции, data flow виден невооруженным глазом. Но необходимо решить важный вопрос: хотим ли мы быть жадными и дожидаться завершения операций фетчинга пользователей сразу же в методе concat? Если да, то как мы реализуем ожидание завершения обеих операций? Спрячем под капотом Thread#join? Или все же воспользуемся изящным интерфейсом, который нам предоставляет Future?
+            А вот в этом фрагменте кода уже все намного более красиво: чистые функции, data flow виден невооруженным глазом. Но необходимо решить важный вопрос: хотим ли мы быть жадными и дожидаться завершения операций фетчинга пользователей сразу же в методе concat? Если да, то как мы реализуем ожидание завершения обеих операций? Спрячем под капотом Thread#join? Или все же воспользуемся изящным интерфейсом, который нам предоставляет Future? Тем более, что мы еще не знаем, а нужен ли кому-то этот count, будет ли он использован далее.
+          </aside>
+        </section>
+        <section>
+          <h3>Functionally beautiful example</h3>
+          <pre>
+            <code data-trim class="ruby">
+              count_f(
+                only_active_f(
+                  concat_f(
+                    Future.new { UsersService.all },
+                    Future.new { ArchivedUsersService.for_last_month }
+                  )
+                )
+              )
+            </code>
+          </pre>
+          <aside class="notes">
+            Я пометил наши функции суффиксом _f чтобы дать понять, что каждая из них работает именно с фьючерами и возвращает тоже Future. Таким образом, на вершине графа вызовов будет получен Future. Мы таким образом можем определять как должен выполняться код, в какой последовательности и при этом не требовать его немедленного выполнения.
+            Мы уже несколько раз увидели создание нового Future и могли заметить, что этот тип выступает как бы оберткой для другого значения. Оно необязательно должно долго и нудно откуда-то фетчиться, генерироваться и т.п. Это может быть и уже вычисленное выражение. В таком случае мы получим Future который уже complete и получение value не будет блокирующей операцией.
+          </aside>
+        </section>
+        <section>
+          <h3>Future ingredients: unit</h3>
+          <pre class="fragment">
+            <code data-trim class="ruby">
+              f = Future.new(x)
+              # or
+              f = Future.new
+              f.complete_with(x) # will be revisited later...
+
+              f.value # doesn't block
+              f.complete? # == true
+            </code>
+          </pre>
+          <pre class="fragment">
+            <code data-trim class="ruby">
+              class Future
+                def self.unit(value)
+                  Future.new(value)
+                end
+              end
+            </code>
+          </pre>
+          <aside class="notes">
+            Сейчас мы построим функцию count_f из нашего примера. Она принимает Future, значением которого будет массив, считает количество его элементов, но возвращает это количество также завернутым в Future.
+          </aside>
+        </section>
+        <section>
+          <h3>Future ingredients: fmap</h3>
+          <pre class="fragment">
+              <code data-trim class="ruby">
+                def count_f(future)
+                  future.fmap(
+                    proc { |enumerable| enumerable.count }
+                  )
+                end
+              </code>
+            </pre>
+          <pre class="fragment">
+            <code data-trim class="ruby">
+              class Future
+                # ...
+
+                def fmap(func)
+                  f_mapped = Future.new
+                  on_complete do |value|
+                    f_mapped.complete_with(func.call(value))
+                  end
+                  f_mapped
+                end
+              end
+              
+            </code>
+          </pre>
+          <aside class="notes">
+            [... объяснить count_f ...]
+            fmap - это стандартная операция для так называемых функторов, наш Future, кстати им тоже является. Попросту говоря, функтор - это контейнер или контекст для какого-то либо множества значений, к которым можно применить операцию отображения, и результатом отображения будет новый экземпляр функтора, с новым множеством значений, каждое из которых претерпело это отображение. С натяжкой, Array - это тоже функтор.
+            [... показать определение fmap  ...]
           </aside>
         </section>
       </div>
