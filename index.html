@@ -143,7 +143,7 @@
             <code data-trim class="ruby" style="line-height: 3rem">
               users = UsersService.all
               archived_users = ArchivedUsersService.for_last_month
-              (users + archived_users).select(&:active).size
+              (users + archived_users).select(&:active?).size
             </code>
           </pre>
           <aside class="notes">
@@ -222,7 +222,7 @@
               def count_f(future)
                 future.fmap(
                   # f: Enumerable -> Integer
-                  proc { |enumerable| enumerable.count }
+                  ->(enumerable) { enumerable.count }
                 )
               end
             </code>
@@ -232,11 +232,11 @@
               class Future
                 # ...
                 def fmap(func)
-                  f_mapped = Future.new
+                  f_new = Future.new
                   on_complete do |value|
-                    f_mapped.complete_with(func.call(value))
+                    f_new.complete_with(func.call(value))
                   end
-                  f_mapped
+                  f_new
                 end
               end
             </code>
@@ -255,9 +255,7 @@
             def only_active_f(future)
               future.fmap(
                 # f: Enumerable -> Enumerable
-                proc do |enumerable|
-                  enumerable.select { |elem| elem.active? }
-                end
+                ->(enumerable) { enumerable.select(&:active?) }
               )
             end
             </code>
@@ -267,11 +265,40 @@
           </aside>
         </section>
         <section>
-          
-        </section>
-        <section>
           <img src="img/003_to_go_deeper_future_of_a_future.jpg" alt="We need to go deeper">
         </section>
+        <section>
+          <h3>Chaining futures</h3>
+          <pre class="fragment" style="margin: 0 auto;">
+            <code data-trim class="ruby">
+              f = Future.new { UsersService.all }.fmap(
+                # f: Enumerable -> Future&lt;Profile&gt;
+                ->(users) {
+                  Future.new { ProfileService.profile_for(users.first) }
+                }
+              )
+              f.value # let's get the profile of a first user...
+            </code>
+          </pre>
+          <p class="fragment" style="margin: 0 auto;">oops...</p>
+          <pre class="fragment" style="margin: 0 auto;">
+            <code data-trim class="ruby" data-noescape>
+              class Future
+                def fmap(func)
+                  f_new = Future.new
+                  on_complete do |value|
+                    f_new.complete_with(<mark>func.call(value)</mark>)<span class="fragment"> # it's a Future!</span>
+                  end
+                  f_new
+                end
+              end
+            </code>
+          </pre>
+          <aside class="notes">
+            Мы ожидали получить значение, вычисленное в результате последнего в цепочке Futures, но получили сам Future. Наш fmap не умеет работать с ситуациями отображения значения контейнера в новый контейнер. Нужно пофиксить эту ситуацию.
+          </aside>
+        </section>
+        <!-- TODO: below -->
         <section>
           <h3>Future of a future</h3>
           <pre class="fragment">
