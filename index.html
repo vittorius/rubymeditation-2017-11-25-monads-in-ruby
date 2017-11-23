@@ -1,112 +1,198 @@
 <!doctype html>
 <html>
-	<head>
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-		<title>reveal.js</title>
+    <title>reveal.js</title>
 
-		<link rel="stylesheet" href="css/reveal.css">
-		<link rel="stylesheet" href="css/theme/black.css">
+    <link rel="stylesheet" href="css/reveal.css">
+    <link rel="stylesheet" href="css/theme/black.css">
 
-		<!-- Theme used for syntax highlighting of code -->
-		<link rel="stylesheet" href="lib/css/zenburn.css">
+    <!-- Theme used for syntax highlighting of code -->
+    <link rel="stylesheet" href="lib/css/zenburn.css">
 
-		<!-- Printing and PDF exports -->
-		<script>
-			var link = document.createElement( 'link' );
-			link.rel = 'stylesheet';
-			link.type = 'text/css';
-			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
-			document.getElementsByTagName( 'head' )[0].appendChild( link );
-		</script>
-	</head>
-	<body>
-		<div class="reveal">
-			<div class="slides">
-				<section>
-					<h1>Monads in Ruby</h1>
-					<!-- TODO: make my name font smaller -->
-					<h6>By Victor Zagorodny</h6>
-					<!-- TODO: add font awesome and icons -->
-					<!-- TODO: make links smaller and group near the bottom of the slide -->
-					<!-- TODO: make visible not full links by just IDs (e.g. "vittoriuz") -->
-					<a href="mailto:post.vittorius@gmail.com">Email: post.vittorius@gmail.com</a><br>
-					<a href="https://twitter.com/vittoriuz">Twitter: https://twitter.com/vittoriuz</a><br>
-					<a href="https://github.com/vittorius">Github: https://github.com/vittorius</a><br>
-					<aside class="notes">
-						Представить себя и тему
-					</aside>
-				</section>
-				<section>
-					<img src="img/001_year_2013_still_explaining_monads.png" alt="Still explaining monads">
-					<!-- TODO: add footnote with credits to mraleph -->
-					<aside class="notes">
-						Интерес к функциональному программированию, равно как и спрос на знания в этой области, ощутимо вырос за последние несколько лет. Одни концепции, такие как иммутабельность данных и чистые функции используются относительно массово, другие же остаются загадочными и кажутся малоприменимыми за рамками чисто функциональных языков и среды гиков, а их практическая применимость ставится под сомнение. Сегодня попробуем развеять немного мифов относительно монад.
-					</aside>
-				</section>
-				<section>
-					<!-- Formerly: <h3>Anyway, what is a monad?</h3> -->
-					<h3>Monads: what is it?</h3>
-					<aside class="notes">
-						1. Задать вопрос, какая часть из аудитории хорошо понимает, что такое монада?<br>
-						2. Если бОльшая, предложить пропустить слайды, где мы объясняем что такое монада, и сразу перейти к примерам в Ruby (нажми Esc чтобы показать все слайды)<br>
-						3. Если 50/50 и меньше, продолжить<br>
-					</aside>
-				</section>
-				<section>
-					<!-- TODO: can be a fragment of "Anyway, what is a monad?" slide -->
-					<img src="img/002_monads_are_burritos.png" alt="Monads are burritos">
-					<aside class="notes">
-						Даже, если вы знаете, что такое монада, вот пара версий из интернетов.
-					</aside>
-				</section>
-				<section>
-					<!-- TODO: can be a fragment of "Anyway, what is a monad?" slide -->
-					<blockquote>
-						<h2>A monad is a monoid in the category of endofunctors, what's the problem?</h2>
-						<footer style="text-align:right"> <!-- TODO: add a class -->
-							— <cite><a href="http://james-iry.blogspot.com/2009/05/brief-incomplete-and-mostly-wrong.html">James Iry</a></cite>
-						</footer>
-					</blockquote>
-					<aside class="notes">
-						А вот определение от адептов функционального программирования.
-						[ ...пауза... ]
-						Но на самом деле вам не нужно изучать Haskell или теорию категорий, чтобы понять, что такое монада. ИМХО, это будет даже вредно.
-					</aside>
-				</section>
-				<section>
-					<h3 class="fragment strike">Monads: what is it?</h3>
-					<aside class="notes">
-						Для того, чтобы ответить на вопрос что такое монада
-						[ ...переход к зачеркнутому фрагменту... ]
-						Нужно понять, зачем или для чего их можно применять
-						[ ...переход к следующему слайду... ]
-					</aside>
-				</section>
-				<section>
-					<!-- TODO: color via class -->
-					<h3>Monads: <span style="color: #f31e5e">why?</span></h3>
-				</section>
-			</div>
-		</div>
+    <!-- Printing and PDF exports -->
+    <script>
+      var link = document.createElement( 'link' );
+      link.rel = 'stylesheet';
+      link.type = 'text/css';
+      link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+      document.getElementsByTagName( 'head' )[0].appendChild( link );
+    </script>
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides">
+        <section>
+          <h1>Monads in Ruby</h1>
+          <!-- TODO: make my name font smaller -->
+          <h6>By Victor Zagorodny</h6>
+          <!-- TODO: add font awesome and icons -->
+          <!-- TODO: make links smaller and group near the bottom of the slide -->
+          <!-- TODO: make visible not full links by just IDs (e.g. "vittoriuz") -->
+          <a href="mailto:post.vittorius@gmail.com">Email: post.vittorius@gmail.com</a><br>
+          <a href="https://twitter.com/vittoriuz">Twitter: https://twitter.com/vittoriuz</a><br>
+          <a href="https://github.com/vittorius">Github: https://github.com/vittorius</a><br>
+          <aside class="notes">
+            Представить себя и тему
+          </aside>
+        </section>
+        <section>
+          <img src="img/001_year_2013_still_explaining_monads.png" alt="Still explaining monads">
+          <!-- TODO: add footnote with credits to mraleph -->
+          <aside class="notes">
+            Интерес к функциональному программированию, равно как и спрос на знания в этой области, ощутимо вырос за последние несколько лет. Одни концепции, такие как иммутабельность данных и чистые функции используются относительно массово, другие же остаются загадочными и кажутся малоприменимыми за рамками чисто функциональных языков и среды гиков, а их практическая применимость ставится под сомнение. Сегодня попробуем развеять немного мифов относительно монад.
+          </aside>
+        </section>
+        <section>
+          <!-- Formerly: <h3>Anyway, what is a monad?</h3> -->
+          <h3>Monads: what is it?</h3>
+          <aside class="notes">
+            1. Задать вопрос, какая часть из аудитории хорошо понимает, что такое монада?<br>
+            2. Если бОльшая, предложить пропустить слайды, где мы объясняем что такое монада, и сразу перейти к примерам в Ruby (нажми Esc чтобы показать все слайды)<br>
+            3. Если 50/50 и меньше, продолжить<br>
+          </aside>
+        </section>
+        <section>
+          <!-- TODO: can be a fragment of "Anyway, what is a monad?" slide -->
+          <img src="img/002_monads_are_burritos.png" alt="Monads are burritos">
+          <aside class="notes">
+            Даже, если вы знаете, что такое монада, вот пара версий из интернетов.
+          </aside>
+        </section>
+        <section>
+          <!-- TODO: can be a fragment of "Anyway, what is a monad?" slide -->
+          <blockquote>
+            <p>A monad is a monoid in the category of endofunctors, what's the problem?</p>
+            <footer style="text-align:right"> <!-- TODO: add a class -->
+              — <cite><a href="http://james-iry.blogspot.com/2009/05/brief-incomplete-and-mostly-wrong.html">James Iry</a></cite>
+            </footer>
+          </blockquote>
+          <aside class="notes">
+            А вот определение от адептов функционального программирования.
+            [ ...пауза... ]
+            Но на самом деле вам не нужно изучать Haskell или теорию категорий, чтобы понять, что такое монада. ИМХО, это будет даже вредно.
+          </aside>
+        </section>
+        <section>
+          <h3 class="fragment strike">Monads: what is it?</h3>
+          <aside class="notes">
+            Для того, чтобы ответить на вопрос что такое монада
+            [ ...переход к зачеркнутому фрагменту... ]
+            Стоит начать с конца и увидеть зачем и в каком контексте они возникли и применяются изначально
+            [ ...переход к следующему слайду... ]
+          </aside>
+        </section>
+        <section>
+          <!-- TODO: color via class -->
+          <h3>Monads: <span style="color: #f31e5e">why?</span></h3>
+        </section>
+        <section>
+            <h3>Lazy Evaluation</h3>
+            <h5 class="fragment">Example #1 (pseudocode):</h5>
+              <pre class="fragment">
+                  
+                <code data-trim class="fsharp">
+                  let numbers = [1, ...]
+                  fun is_prime x all (map (y -> x mod y <> 0) [2..x-1])
+                  let primes = filter is_prime numbers
+                  let tenth_prime = first (take primes 10)
+                  print tenth_prime
+                </code>
+              </pre></span>
+          </p>
+          
+          <h5 class="fragment">Example #2:</h5>
+              <pre class="fragment">
+                  
+                <code data-trim class="ruby">
+                  if user.signed_in? && user.current_order&.pending?
+                  # ...
+                </code>
+              </pre>
+          
+          <aside class="notes">
+            В ленивой модели вычислений вычисления выражений не производятся пока их результат не требуется для выражения более высокого уровня либо реализации side effect - например, печать в консоль. Порядок редукции выражений неизвестен при их определении. Каждое выражение представляет собой так называемый thunk - выражение, которое не вычислено на данный момент, но может быть вычислено по запросу.
+            Рассказать про примеры кода.
+          </aside>
+        </section>
+        <section>
+          <h3>Welcome to the future</h3>
+          <pre>
+            <!-- TODO: use PrismJS, it highlights Ruby classes usage -->
+            <code data-trim class="ruby">
+              f = Future.new do
+              # ... executed asynchronously ...
+              end
 
-		<script src="lib/js/head.min.js"></script>
-		<script src="js/reveal.js"></script>
+              f.complete? # non-blocking
 
-		<script>
-			// More info about config & dependencies:
-			// - https://github.com/hakimel/reveal.js#configuration
-			// - https://github.com/hakimel/reveal.js#dependencies
-			Reveal.initialize({
-				dependencies: [
-					{ src: 'plugin/markdown/marked.js' },
-					{ src: 'plugin/markdown/markdown.js' },
-					{ src: 'plugin/notes/notes.js', async: true },
-					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
-				],
-				history: true
-			});
-		</script>
-	</body>
+              f.value # blocks until complete
+
+              f.add_listener do
+              # ... called upon completion ...
+              end
+            </code>
+          </pre>
+          <aside class="notes">
+              В Ruby мы практически всегда имеем дело с eager evaluation. Но сейчас мы рассмотрим пример, где вычисления выполняются не лениво, а асинхронно, т.е. правило о неизвестном заранее порядке редукции выражений сохраняется. Я создал небольшой класс Future, который основывается на одноименном классе из concurrent-ruby. Благодаря concurrent-ruby, код вызывается в блоке, вызывается синхронно, но это происходит в другом потоке, а по завершении выполнения блока Future устанавливается в состояние completed. Поэтому можно относиться к нему действительно как JS Promises с точки зрения модели программирования. Можно было назвать его Promise, но поскольку мы все-таки Ruby-конференция...
+              Рассказать о методах этого класса
+          </aside>
+        </section>
+        <section>
+          <!-- TODO: here and below, use PrismJS, it highlights Ruby classes usage -->
+          <h3>An ugly example</h3>
+          <pre>
+            <code data-trim class="ruby" data-noescape>
+              <br>
+              users = UsersService.all
+              archived_users = ArchivedUsersService.for_last_month
+              (users + archived_users).select(&:active).size
+              <br>
+            </code>
+          </pre>
+          <aside class="notes">
+            Этот код выполняет слегка искусственную задачу получить из 2х веб-сервисов пользователей 2-х различных типов,  соединить их в одну последовательность, отобрать только активных (по общему атрибуту active == true), и получить их количество. Методы all и for_last_month синхронны, возвращают массивы. Да, этот код намеренно создан, чтобы вызвать у вас или хотя бы у адептов ФП отвращение.
+          </aside>
+        </section>
+        <section>
+          <h3>Functionally beautiful example</h3>
+          <pre>
+            <code data-trim class="ruby">
+              count(
+                only_active(
+                  concat(
+                    Future.new { UsersService.all },
+                    Future.new { ArchivedUsersService.for_last_month }
+                  )
+                )
+              )
+            </code>
+          </pre>
+          <aside class="notes">
+            А вот в этом фрагменте кода уже все намного более красиво: чистые функции, data flow виден невооруженным глазом. Но необходимо решить важный вопрос: хотим ли мы быть жадными и дожидаться завершения операций фетчинга пользователей сразу же в методе concat? Если да, то как мы реализуем ожидание завершения обеих операций? Спрячем под капотом Thread#join? Или все же воспользуемся изящным интерфейсом, который нам предоставляет Future?
+          </aside>
+        </section>
+      </div>
+    </div>
+
+    <script src="lib/js/head.min.js"></script>
+    <script src="js/reveal.js"></script>
+
+    <script>
+      // More info about config & dependencies:
+      // - https://github.com/hakimel/reveal.js#configuration
+      // - https://github.com/hakimel/reveal.js#dependencies
+      Reveal.initialize({
+        dependencies: [
+          { src: 'plugin/markdown/marked.js' },
+          { src: 'plugin/markdown/markdown.js' },
+          { src: 'plugin/notes/notes.js', async: true },
+          { src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+        ],
+        history: true
+      });
+    </script>
+  </body>
 </html>
