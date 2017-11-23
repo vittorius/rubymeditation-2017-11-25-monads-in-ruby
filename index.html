@@ -94,7 +94,7 @@
           <pre class="fragment">
             <code data-trim class="fsharp">
               let numbers = [1, ...]
-              fun is_prime x all (map (y -> x mod y <> 0) [2..x-1])
+              fun is_prime x = all (map (y -> x mod y <> 0) [2..x-1])
               let primes = filter is_prime numbers
               let tenth_prime = first (take primes 10)
               print tenth_prime
@@ -189,6 +189,7 @@
         </section>
         <section>
           <h3>Ingredients: unit</h3>
+          <p>(aka "bind", "return")</p>
           <pre class="fragment">
             <code data-trim class="ruby">
               f = Future.new(x)
@@ -216,7 +217,7 @@
         </section>
         <section>
           <h3>Ingredients: fmap</h3>
-          <pre class="fragment" style="margin: 0 auto;">
+          <pre class="fragment" style="margin: -2rem auto;">
             <code data-trim class="ruby">
               # count_f : Future&lt;Enumerable&gt; -> Future&lt;Integer&gt;
               def count_f(future)
@@ -227,10 +228,11 @@
               end
             </code>
           </pre>
-          <pre class="fragment" style="margin: 0 auto;">
+          <pre class="fragment" style="margin: -2rem auto;">
             <code data-trim class="ruby">
               class Future
                 # ...
+                # fmap: Func&lt;Value, Value&gt; -> Future&lt;Value&gt;
                 def fmap(func)
                   f_new = Future.new
                   on_complete do |value|
@@ -269,7 +271,7 @@
         </section>
         <section>
           <h3>Chaining futures</h3>
-          <pre class="fragment" style="margin: 0 auto;">
+          <pre class="fragment" style="margin: -1rem auto;">
             <code data-trim class="ruby">
               f = Future.new { UsersService.all }.fmap(
                 # f: Enumerable -> Future&lt;Profile&gt;
@@ -280,8 +282,8 @@
               f.value # let's get the profile of a first user...
             </code>
           </pre>
-          <p class="fragment" style="margin: 0 auto;">oops...</p>
-          <pre class="fragment" style="margin: 0 auto;">
+          <p class="fragment" style="margin: -3rem auto -1rem;">oops...</p>
+          <pre class="fragment" style="margin: -1rem auto;">
             <code data-trim class="ruby" data-noescape>
               class Future
                 def fmap(func)
@@ -298,36 +300,48 @@
             Мы ожидали получить значение, вычисленное в результате последнего в цепочке Futures, но получили сам Future. Наш fmap не умеет работать с ситуациями отображения значения контейнера в новый контейнер. Нужно пофиксить эту ситуацию.
           </aside>
         </section>
-        <!-- TODO: below -->
         <section>
-          <h3>Future of a future</h3>
-          <pre class="fragment">
-            <code data-trim class="ruby">
-              count_f(
-                only_active_f(
-                  Future.new do
-                    # we retrieve these uses in some mysterious way...
+          <h3>Ingredients: bind</h3>
+          <p>(aka "flatMap", "join")</p>
+          <pre>
+            <code data-trim class="ruby" style="overflow:hidden; padding: 2rem;">
+              class Future
+                # ...
+                protected
+
+                # flatten: Future&lt;Future&lt;Value&gt;&gt; -> Future&lt;Value&gt;
+                def flatten
+                  f_flat = Future.new
+                  on_complete do |f_internal|
+                    f_internal.on_complete do |value|
+                      f_flat.complete_with(value)
+                    end
                   end
-                )
-              )
-            </code>
-          </pre>
-          <pre class="fragment">
-            <code data-trim class="ruby">
-              count_f(
-                only_active_f(
-                  concat_f(
-                    Future.new { UsersService.all },
-                    Future.new { ArchivedUsersService.for_last_month }
-                  )
-                )
-              )
+                  f_flat
+                end
+              end
             </code>
           </pre>
           <aside class="notes">
-            [... первый фрагмент кода ...]
-            Освежим немного в памяти наш пример, хотя бы его часть.
-            [... второй фрагмент кода ...]
+            TODO
+          </aside>
+        </section>
+        <section>
+          <h3>Ingredients: bind</h3>
+          <pre>
+            <code data-trim class="ruby" style="overflow:hidden; padding: 2rem;">
+              class Future
+                # ...
+
+                # bind: Func&lt;Value, Future&lt;Value&gt;&gt; -> Future&lt;Value&gt;
+                def bind(func)
+                  fmap(func).flatten
+                end
+              end
+            </code>
+          </pre>
+          <aside class="notes">
+            TODO
           </aside>
         </section>
       </div>
