@@ -118,16 +118,16 @@
             <!-- TODO: use PrismJS, it highlights Ruby classes usage -->
             <code data-trim class="ruby">
               f = Future.new do
-              # ... executed asynchronously ...
+              # executed asynchronously
               end
 
               f.complete? # non-blocking
 
-              f.value # blocks until complete
-
-              f.on_complete do
-              # ... called upon completion ...
+              f.on_complete do |value|
+              # called upon completion; preferred approach
               end
+
+              f.value # blocks until complete; less preferred approach
             </code>
           </pre>
           <aside class="notes">
@@ -188,13 +188,13 @@
           </aside>
         </section>
         <section>
-          <h3>Future ingredients: unit</h3>
+          <h3>Ingredients: unit</h3>
           <pre class="fragment">
             <code data-trim class="ruby">
               f = Future.new(x)
               # or
               f = Future.new
-              f.complete_with(x) # will be revisited later...
+              f.complete_with(x)
 
               f.value # doesn't block
               f.complete? # == true
@@ -203,6 +203,7 @@
           <pre class="fragment">
             <code data-trim class="ruby">
               class Future
+                # unit : Value -> Future&lt;Value&gt;
                 def self.unit(value)
                   Future.new(value)
                 end
@@ -210,25 +211,26 @@
             </code>
           </pre>
           <aside class="notes">
-            Сейчас мы построим функцию count_f из нашего примера. Она принимает Future, значением которого будет массив, считает количество его элементов, но возвращает это количество также завернутым в Future.
+            Сейчас мы построим функцию count_f из нашего примера. Она принимает Future, значением которого будет Enumerable, считает количество его элементов, но возвращает это количество также завернутым в Future. Обратите внимание, что count_f ожидает Future, содержащий конкретный тип значения.
           </aside>
         </section>
         <section>
-          <h3>Future ingredients: fmap</h3>
-          <pre class="fragment">
-              <code data-trim class="ruby">
-                def count_f(future)
-                  future.fmap(
-                    proc { |enumerable| enumerable.count }
-                  )
-                end
-              </code>
-            </pre>
-          <pre class="fragment">
+          <h3>Ingredients: fmap</h3>
+          <pre class="fragment" style="margin: 0 auto;">
+            <code data-trim class="ruby">
+              # count_f : Future&lt;Enumerable&gt; -> Future&lt;Integer&gt;
+              def count_f(future)
+                future.fmap(
+                  # f: Enumerable -> Integer
+                  proc { |enumerable| enumerable.count }
+                )
+              end
+            </code>
+          </pre>
+          <pre class="fragment" style="margin: 0 auto;">
             <code data-trim class="ruby">
               class Future
                 # ...
-
                 def fmap(func)
                   f_mapped = Future.new
                   on_complete do |value|
@@ -237,13 +239,68 @@
                   f_mapped
                 end
               end
-              
             </code>
           </pre>
           <aside class="notes">
             [... объяснить count_f ...]
-            fmap - это стандартная операция для так называемых функторов, наш Future, кстати им тоже является. Попросту говоря, функтор - это контейнер или контекст для какого-то либо множества значений, к которым можно применить операцию отображения, и результатом отображения будет новый экземпляр функтора, с новым множеством значений, каждое из которых претерпело это отображение. С натяжкой, Array - это тоже функтор.
+            fmap - это стандартная операция для так называемых функторов, наш Future, кстати им тоже является. Попросту говоря, функтор - это контейнер или контекст для какого-то либо множества значений, к которым можно применить операцию отображения, и результатом отображения будет новый экземпляр функтора, с новым множеством значений, каждое из которых претерпело это отображение. Array - это тоже функтор.
             [... показать определение fmap  ...]
+          </aside>
+        </section>
+        <section>
+          <h3>Ingredients: fmap</h3>
+          <pre>
+            <code data-trim class="ruby">
+            # only_active_f : Future&lt;Enumerable&gt; -> Future&lt;Enumerable&gt;
+            def only_active_f(future)
+              future.fmap(
+                # f: Enumerable -> Enumerable
+                proc do |enumerable|
+                  enumerable.select { |elem| elem.active? }
+                end
+              )
+            end
+            </code>
+          </pre>
+          <aside class="notes">
+            only_active_f определеляется тривиально. а вот для того, чтобы определить concat_f, который является параллельным выполнением двух Future, нам нужно сначала научиться определять последовательные операции, создавать цепочки из Future. Если вам на ум приходит Promise.then из JavaScript, это он и есть.
+          </aside>
+        </section>
+        <section>
+          
+        </section>
+        <section>
+          <img src="img/003_to_go_deeper_future_of_a_future.jpg" alt="We need to go deeper">
+        </section>
+        <section>
+          <h3>Future of a future</h3>
+          <pre class="fragment">
+            <code data-trim class="ruby">
+              count_f(
+                only_active_f(
+                  Future.new do
+                    # we retrieve these uses in some mysterious way...
+                  end
+                )
+              )
+            </code>
+          </pre>
+          <pre class="fragment">
+            <code data-trim class="ruby">
+              count_f(
+                only_active_f(
+                  concat_f(
+                    Future.new { UsersService.all },
+                    Future.new { ArchivedUsersService.for_last_month }
+                  )
+                )
+              )
+            </code>
+          </pre>
+          <aside class="notes">
+            [... первый фрагмент кода ...]
+            Освежим немного в памяти наш пример, хотя бы его часть.
+            [... второй фрагмент кода ...]
           </aside>
         </section>
       </div>
