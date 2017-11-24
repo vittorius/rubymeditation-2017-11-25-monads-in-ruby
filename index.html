@@ -78,6 +78,7 @@
         <section>
           <h3 class="fragment strike">Monads: what is it?</h3>
           <aside class="notes">
+            ВОПРОС К АУДИТОРИИ: КАК МНОГО ЛЮДЕЙ ЗНАЮТ, ЧТО ТАКОЕ МОНАДЫ? НУЖНО ЛИ ПРОМАТЫВАТЬ К ПОСЛЕДНИМ СЛАЙДАМ?
             Для того, чтобы ответить на вопрос что такое монада
             [ ...переход к зачеркнутому фрагменту... ]
             Стоит начать с конца и увидеть зачем и в каком контексте они возникли и применяются изначально
@@ -301,8 +302,8 @@
           </aside>
         </section>
         <section>
-          <h3>Ingredients: bind</h3>
-          <p>(aka "flatMap", "join")</p>
+          <h3>Ingredients: flatten</h3>
+          <p>(aka "join")</p>
           <pre>
             <code data-trim class="ruby" style="overflow:hidden; padding: 2rem;">
               class Future
@@ -323,11 +324,12 @@
             </code>
           </pre>
           <aside class="notes">
-            TODO
+            Функция flatten уплощает вложенность Futures - она приводит Future от Future от Value просто к Future от Value
           </aside>
         </section>
         <section>
           <h3>Ingredients: bind</h3>
+          <p>(aka "flatMap")</p>
           <pre>
             <code data-trim class="ruby" style="overflow:hidden; padding: 2rem;">
               class Future
@@ -341,8 +343,258 @@
             </code>
           </pre>
           <aside class="notes">
-            TODO
+            Функция bind ожидает на входе функцию, принимающую распакованное значение и возвращающее новый Future, с произвольно измененным значением внутри. Возвращает функция bind "одноуровневый" Future, в котором инкапсулировано новое значение, помещенное туда коллбэком - аргументом bind. Как мы увидим ниже есть много различных конкретных монад, типа Future,  их определяюще отличия как раз задаются методом bind.
           </aside>
+        </section>
+        <section>
+          <h3>Chaining futures correctly</h3>
+          <pre>
+            <code data-trim class="ruby" data-noescape>
+              f = Future.new { UsersService.all }.<mark>bind</mark>(
+                # f: Enumerable -> Future&lt;Profile&gt;
+                ->(users) {
+                  Future.new { ProfileService.profile_for(users.first) }
+                }
+              )
+              # fmap(func).flatten was called under the hood
+              f.value # now it's the Profile
+            </code>
+          </pre>
+          <aside class="notes">
+            Теперь мы можем выстроить эту цепочку правильно
+          </aside>
+        </section>
+        <section>
+          <h3>Two important things</h3>
+          <ol>
+            <li>
+              Future is a monad<br>
+              <small class="fragment">Just believe me</small>
+            </li>
+            <li>
+              I won't tell you how we built the <code>concat_f</code> function<br>
+              <small class="fragment">But I can give some clues</small>
+            </li>
+          </ol>
+        </section>
+        <section>
+          <h3>Lifting</h3>
+          <pre>
+            <code data-trim class="ruby">
+              count -> lift -> count_f
+
+              def lift(func)
+                ->(future) { future.fmap(func) }
+              end
+
+              concat -> lift2 -> concat_f
+
+              # Func&lt;Value, Value, Value&gt;
+              #   -> Func&lt;Future&lt;Value&gt;, &lt;Future&lt;Value&gt;, &lt;Future&lt;Value&gt;&gt;
+              def lift2(func) # aka "liftM2"
+                # ...
+              end
+            </code>
+          </pre>
+          <aside class="notes">
+            Lifting - это процесс поднятия функции от оперирующей обычными значениями до той же функции, но оперирующей монадическими значениями. liftM2 легко расширяется до liftM - функции, поднимающий функцию с любым количеством аргументов. Google в помощь.
+          </aside>
+        </section>
+        <section>
+          <h3>Monad: definition (at last)</h3>
+          <ul>
+            <li class="fragment">
+              It's a data type
+            </li>
+            <li class="fragment">
+              It's a container for some (immutable) value
+            </li>
+            <li class="fragment">
+              It has a <mark><code>unit</code></mark> operation defined which wraps a value in it
+            </li>
+            <li class="fragment">
+              It has a <mark><code>bind</code></mark> operation defined which allows building a chain of transformations over a monadic value
+            </li>
+          </ul>
+        </section>
+        <section>
+          <h3>Example: maybe monad</h3>
+          <pre>
+            <code data-trim class="ruby">
+            class Maybe
+              attr_reader :value
+
+              class Some < Maybe
+                def initialize(value)
+                  @value = value
+                end
+              end
+
+              class None < Maybe; end
+            end
+            </code>
+          </pre>
+        </section>
+        <section>
+          <h3>Example: maybe monad</h3>
+          <pre>
+            <code data-trim class="ruby">
+              class Maybe
+                # "unit" function
+                def self.[](value)
+                  value.nil? ? None.new : Some.new(value)
+                end
+              
+                def bind(func)
+                  is_a?(None) ? self : func.call(self.value)
+                end
+              
+                alias_method :>=, :bind
+              end
+            </code>
+          </pre>
+        </section>
+        <section>
+          <h3>Example: maybe monad (usage)</h3>
+          <pre>
+            <code data-trim class="ruby" data-noescape style="overflow: hidden; line-height: 2.1rem;">
+              # add_m2:
+              #  Func&lt;Maybe&lt;Integer&gt;, Maybe&lt;Integer&gt;&gt; -> Maybe&lt;Integer&gt;
+              def add_m2(m1, m2)
+                m1.>=( <span class="fragment"># calling bind</span>
+                  ->(x) { <span class="fragment"># in binding function; value of m1 unpacked to x</span>
+                    <span class="fragment"># we need to return Maybe from here; m2 is Maybe</span>
+                    <span class="fragment"># m2.>= will also return Maybe</span>
+                    m2.>=( <span class="fragment"># calling bind</span>
+                      ->(y) { <span class="fragment"># value of m2 unpacked to y</span>
+                        Maybe[x + y] <span class="fragment"># x and y are Integers</span>
+                        <span class="fragment"># add them and wrap the result into Maybe</span>
+                      }
+                    )
+                  }
+                )
+              end
+            </code>
+          </pre>
+        </section>
+        <section>
+          <h3>Example: maybe monad (usage)</h3>
+          <pre>
+            <code data-trim class="ruby" style="overflow: hidden; line-height: 2.5rem;">
+                add_m2(Maybe[1], Maybe[2]) # => Maybe::Some#&lt;value = 3&gt;
+                add_m2(Maybe[4], Maybe[5]).value # => 9
+                add_m2(Maybe[nil], Maybe[5]) 
+                # => Maybe::None; "bind" of Maybe[5] was not executed
+            </code>
+          </pre>
+        </section>
+        <section>
+          <h3>Maybe monad</h3>
+          <pre>
+            <code data-trim class="ruby">
+              maybe_user = Maybe(user).bind do |u|
+                Maybe(u.address).bind do |a|
+                  Maybe(a.street)
+                end
+              end
+
+              # If user with address exists
+              => Some("Street Address")
+              # If user or address is nil
+              => None()
+            </code>
+          </pre>
+          <aside class="notes">
+            Here and below I'm going to use mostly kleisli and dry-monads gems for concrete examples. Later, I'll enumerate all most.
+            The Maybe monad is used when a series of computations could return nil at any point.
+          </aside>
+        </section>
+        <section>
+          <h3>Either monad</h3>
+          <pre>
+            <code data-trim class="ruby" style="overflow: hidden; line-height: 2.1rem;">
+              def calculate(input)
+                Right(input).bind do |value|
+                  value > 1
+                    ? Right(value + 3)
+                    : Left("value was less than 1")
+                end.bind do |value|
+                  value % 2 == 0 
+                    ? Right(value * 2)
+                    : Left("value was not even")
+                end
+              end
+
+              calculate(3) # => Right(12)
+              calculate(0) # => Left("value was less than 1")
+              calculate(0).value # => "value was less than 1"
+            </code>
+          </pre>
+          <aside class="notes">
+            The Either monad is useful to express a series of computations that might
+            return an error object with additional information.
+            The Either mixin has two type constructors: Right and Left. The Right
+            can be thought of as “everything went right” and the Left is used when
+            “something has gone wrong”.
+            Снова сплошная дискриминация для левшей.
+          </aside>
+        </section>
+        <section>
+          <h3>Monads in Ruby: editor&apos;s pick</h3>
+            <p>
+              <ul>
+                <li class="fragment">
+                  <a href="https://github.com/pzol/monadic">monadic</a><br>
+                  <small>
+                    Maybe, Either monads. Looks like it's not supported anymore.
+                  </small>
+                </li>
+                <li class="fragment">
+                  <a href="https://github.com/pzol/deterministic">deterministic</a><br>
+                  <small>
+                    Option (actually, it's Maybe), Either, Result (similar to Either). Almost no contributions are made for a long time.
+                  </small>
+                </li>
+                <li class="fragment">
+                  <a href="https://github.com/tomstuart/monads">monads</a><br>
+                  <small>
+                    Option (aka Maybe), Many (aka List), Eventually (aka Continuation). Is a demo for the conference talk, but very clean and usable yet without any observable activity.
+                  </small>
+                </li>
+                <li class="fragment">
+                  <a href="https://github.com/txus/kleisli">kleisli</a><br>
+                  <small>
+                    Maybe, Either, Try, Future, functional composition operators. Good quality code but is abandoned in favor of its successor, dry-monads.
+                  </small>
+                </li>
+                <li class="fragment">
+                  <a href="http://dry-rb.org/gems/dry-monads">dry-monads</a><br>
+                  <small>
+                    Maybe, Either, Try, List. Used by dry-rb ecosystem, most notable example is dry-transactions. Fairly good and regular support. Has its community and used in real projects.
+                  </small>
+                </li>
+              </ul>
+            </p>
+        </section>
+        <section>
+            <h3>Monads in Ruby: honorable mentions</h3>
+            <ul>
+              <li class="fragment">
+                <a href="https://github.com/gilbert/solid_use_case">solid_use_case</a><br>
+                <small>
+                  One of the first gems in the field, was mentioned in a famous talk Railway-Oriented programming
+                </small>
+              </li>
+              <li class="fragment">
+                <p>
+                  Remember, you can always write your own
+                </p>
+              </li>
+            </ul>
+        </section>
+        <section>
+          <h1>Thank you!</h1>
+          <p>Questions?</p>
         </section>
       </div>
     </div>
