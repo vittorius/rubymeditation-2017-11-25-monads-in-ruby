@@ -31,9 +31,11 @@
           <!-- TODO: add font awesome and icons -->
           <!-- TODO: make links smaller and group near the bottom of the slide -->
           <!-- TODO: make visible not full links by just IDs (e.g. "vittoriuz") -->
-          <a href="mailto:post.vittorius@gmail.com">Email: post.vittorius@gmail.com</a><br>
-          <a href="https://twitter.com/vittoriuz">Twitter: https://twitter.com/vittoriuz</a><br>
-          <a href="https://github.com/vittorius">Github: https://github.com/vittorius</a><br>
+          <small>
+            <a href="mailto:post.vittorius@gmail.com">Email: post.vittorius@gmail.com</a><br>
+            <a href="https://twitter.com/vittoriuz">Twitter: https://twitter.com/vittoriuz</a><br>
+            <a href="https://github.com/vittorius">Github: https://github.com/vittorius</a><br>
+          </small>
           <aside class="notes">
             Представить себя и тему
           </aside>
@@ -416,6 +418,12 @@
               It has a <mark><code>bind</code></mark> operation defined which allows building a chain of transformations over a monadic value
             </li>
           </ul>
+          <p class="fragment">
+            All of these make monad a <em>&quot;programmable semicolon&quot;</em>    
+          </p>
+          <aside class="notes">
+            programmable semicolon - потому что соединяет последовательно выполняющиеся выражения, как точка с запятой в C-подобных языка, но поведение этой точки с запятой в случае монады можно программировать
+          </aside>
         </section>
         <section>
           <h3>Example: maybe monad</h3>
@@ -537,6 +545,42 @@
             can be thought of as “everything went right” and the Left is used when
             “something has gone wrong”.
             Снова сплошная дискриминация для левшей.
+          </aside>
+        </section>
+        <section>
+          <h3>Looks familiar?</h3>
+          <img src="img/004_railway.png" alt="Railway-oriented programming">
+        </section>
+        <section>
+          <h3>Try monad</h3>
+          <pre>
+            <code data-trim class="ruby">
+              res = Try() { 10 / 2 }
+              res.value if res.success?
+              # => 5
+            
+              res = Try() { 10 / 0 }
+              res.exception if res.failure?
+              # => #&lt;ZeroDivisionError: divided by 0&gt;
+
+              Try(NoMethodError, NotImplementedError) { 10 / 0 }
+              # => raised ZeroDivisionError: divided by 0 exception
+            </code>
+          </pre>
+          <aside class="notes">
+            By default Try catches all exceptions inherited from StandardError.
+            However you can catch only certain exceptions.
+          </aside>
+        </section>
+        <section>
+          <h3>And others</h3>
+          <ul>
+            <li>List</li>
+            <li>Continuation</li>
+            <li>?</li>
+          </ul>
+          <aside class="notes">
+            There is a plenty info on those in the internets
           </aside>
         </section>
         <section>
